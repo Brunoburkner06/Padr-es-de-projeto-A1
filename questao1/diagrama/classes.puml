@@ -1,0 +1,107 @@
+@startuml
+title Questao 1 - Provisionamento Multinuvem
+skinparam classAttributeIconSize 0
+left to right direction
+interface FabricaNuvem <<Abstract Factory>> {
+  +getProvedor(): String
+  +estimarCustoMensal(maquinas: int, gb: int): double
+  +criarMaquinaVirtual(): MaquinaVirtual
+  +criarArmazenamento(): Armazenamento
+  +criarFila(): FilaMensagens
+}
+class FabricaAws <<Concrete Factory>>
+class FabricaAzure <<Concrete Factory>>
+FabricaNuvem <|.. FabricaAws
+FabricaNuvem <|.. FabricaAzure
+
+interface MaquinaVirtual <<Abstract Product>> {
+  +getIdentificador(): String
+  +getCustoPorHora(): double
+}
+interface Armazenamento <<Abstract Product>> {
+  +getIdentificador(): String
+  +getCustoPorGbMes(): double
+}
+interface FilaMensagens <<Abstract Product>> {
+  +getIdentificador(): String
+  +getCustoMensal(): double
+}
+class AwsMaquinaVirtual <<Concrete Product>>
+class AwsArmazenamento <<Concrete Product>>
+class AwsFila <<Concrete Product>>
+class AzureMaquinaVirtual <<Concrete Product>>
+class AzureArmazenamento <<Concrete Product>>
+class AzureFila <<Concrete Product>>
+MaquinaVirtual <|.. AwsMaquinaVirtual
+MaquinaVirtual <|.. AzureMaquinaVirtual
+Armazenamento <|.. AwsArmazenamento
+Armazenamento <|.. AzureArmazenamento
+FilaMensagens <|.. AwsFila
+FilaMensagens <|.. AzureFila
+FabricaAws ..> AwsMaquinaVirtual : cria
+FabricaAws ..> AwsArmazenamento : cria
+FabricaAws ..> AwsFila : cria
+FabricaAzure ..> AzureMaquinaVirtual : cria
+FabricaAzure ..> AzureArmazenamento : cria
+FabricaAzure ..> AzureFila : cria
+
+class Solicitacao {
+  -nome: String
+  -provedor: String
+  -quantidadeMaquinas: int
+  -gbArmazenamento: int
+}
+class Provisionador <<Client>> {
+  -fabrica: FabricaNuvem
+  +provisionar(s: Solicitacao): Ambiente
+}
+class Ambiente {
+  -nome: String
+  -provedor: String
+  -regiao: String
+  -maquinas: List<MaquinaVirtual>
+  -armazenamento: Armazenamento
+  -fila: FilaMensagens
+  -custoMensal: double
+  +imprimirResumo(): void
+}
+class Configuracao <<Singleton>> {
+  -{static} INSTANCIA: Configuracao
+  -regiao: String
+  -orcamentoMaximo: double
+  -Configuracao()
+  +{static} getInstancia(): Configuracao
+}
+class Auditoria <<Singleton>> {
+  -{static} INSTANCIA: Auditoria
+  -registros: List<RegistroAuditoria>
+  -Auditoria()
+  +{static} getInstancia(): Auditoria
+  +registrar(...): void {synchronized}
+  +consultarHistorico(): List<RegistroAuditoria> {synchronized}
+  +imprimirHistorico(): void
+}
+class RegistroAuditoria {
+  -dataHora: LocalDateTime
+  -ambiente: String
+  -provedor: String
+  -resultado: String
+  -motivo: String
+}
+class Main <<Client>> {
+  +{static} main(args: String[]): void
+}
+Main ..> FabricaAws : seleciona
+Main ..> FabricaAzure : seleciona
+Main ..> Provisionador
+Main ..> Solicitacao
+Provisionador --> FabricaNuvem : usa uma fabrica
+Provisionador ..> Solicitacao
+Provisionador ..> Ambiente : constroi
+Provisionador ..> Configuracao
+Provisionador ..> Auditoria
+Ambiente o-- "*" MaquinaVirtual
+Ambiente o-- "1" Armazenamento
+Ambiente o-- "1" FilaMensagens
+Auditoria *-- "*" RegistroAuditoria
+@enduml
