@@ -1,0 +1,93 @@
+@startuml
+title Questao 2 - Casa de Leiloes Online
+skinparam classAttributeIconSize 0
+left to right direction
+interface ObservadorLance <<Observer>> {
+  +atualizar(lote: Lote, lance: Lance): void
+}
+class Participante <<Concrete Observer>> {
+  -nome: String
+}
+class PainelLeiloeiro <<Concrete Observer>>
+class AuditorLances <<Concrete Observer>> {
+  -registros: List<String>
+  +imprimirRegistros(): void
+}
+ObservadorLance <|.. Participante
+ObservadorLance <|.. PainelLeiloeiro
+ObservadorLance <|.. AuditorLances
+class Lance {
+  -participante: Participante
+  -valor: double
+  -dataHora: LocalDateTime
+}
+class Lote <<Subject / Strategy Context>> {
+  -nome: String
+  -categoria: String
+  -precoInicial: double
+  -precoReserva: double
+  -lanceAtual: double
+  -aberto: boolean
+  -vendido: boolean
+  -observadores: List<ObservadorLance>
+  -lances: List<Lance>
+  -regraComissao: RegraComissao
+  +acompanhar(o: ObservadorLance): void
+  +deixarDeAcompanhar(o: ObservadorLance): void
+  +darLance(p: Participante, valor: double): boolean
+  +trocarRegraComissao(r: RegraComissao): void
+  +encerrar(): void
+  +getValorVenda(): double
+  +imprimirAcertoVendedor(): void
+}
+Lote o-- "*" ObservadorLance : notifica
+Lote *-- "*" Lance : registra
+Lance --> Participante
+interface RegraComissao <<Strategy>> {
+  +calcular(valorVenda: double): double
+}
+class ComissaoArte <<Concrete Strategy>>
+class ComissaoVeiculos <<Concrete Strategy>>
+class ComissaoImoveis <<Concrete Strategy>>
+class ComissaoEletronicos <<Concrete Strategy>>
+RegraComissao <|.. ComissaoArte
+RegraComissao <|.. ComissaoVeiculos
+RegraComissao <|.. ComissaoImoveis
+RegraComissao <|.. ComissaoEletronicos
+Lote --> RegraComissao : regra intercambiavel
+
+interface Fatura <<Component>> {
+  +getNomeLote(): String
+  +getValorVenda(): double
+  +getTotal(): double
+  +getItensAdicionais(): List<String>
+  +imprimir(): void
+}
+class FaturaBasica <<Concrete Component>>
+abstract class ServicoAdicional <<Decorator>> {
+  #fatura: Fatura
+  #descricao(): String
+  #custo(): double
+}
+class SeguroTransporte <<Concrete Decorator>>
+class CertificadoAutenticidade <<Concrete Decorator>>
+class EmbalagemEspecial <<Concrete Decorator>>
+class EntregaExpressa <<Concrete Decorator>>
+Fatura <|.. FaturaBasica
+Fatura <|.. ServicoAdicional
+ServicoAdicional --> Fatura : envolve
+ServicoAdicional <|-- SeguroTransporte
+ServicoAdicional <|-- CertificadoAutenticidade
+ServicoAdicional <|-- EmbalagemEspecial
+ServicoAdicional <|-- EntregaExpressa
+FaturaBasica ..> Lote : utiliza valor vendido
+class Main <<Client>> {
+  +{static} main(args: String[]): void
+}
+Main ..> Lote
+Main ..> Participante
+Main ..> PainelLeiloeiro
+Main ..> AuditorLances
+Main ..> RegraComissao
+Main ..> Fatura
+@enduml
